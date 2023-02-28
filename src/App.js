@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import './css/PullRequestForm.css';
 
 const PullRequestForm = () => {
   const [username, setUsername] = useState('');
@@ -10,6 +11,21 @@ const PullRequestForm = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  useEffect(() => {
+    const checkAuthentication = async () => {
+      const response = await fetch('https://api.github.com/user', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('githubAccessToken')}`
+        }
+      });
+      if (response.ok) {
+        setIsAuthenticated(true);
+      }
+    };
+
+    checkAuthentication();
+  }, []);
+
   const authenticateUser = async () => {
     const response = await fetch('https://api.github.com/user', {
       headers: {
@@ -17,6 +33,7 @@ const PullRequestForm = () => {
       }
     });
     if (response.ok) {
+      localStorage.setItem('githubAccessToken', btoa(`${username}:${password}`));
       setIsAuthenticated(true);
     } else {
       setErrorMessage('Authentication failed');
@@ -48,22 +65,24 @@ const PullRequestForm = () => {
   };
 
   return (
-    <div>
+    <div className="container">
       {!isAuthenticated &&
-        <div>
+        <div className="auth-container">
+          <h2>Authenticate with GitHub</h2>
           <input type="text" placeholder="GitHub username" value={username} onChange={(e) => setUsername(e.target.value)} />
           <input type="password" placeholder="GitHub password" value={password} onChange={(e) => setPassword(e.target.value)} />
           <button onClick={authenticateUser}>Authenticate</button>
-          <p>{errorMessage}</p>
+          <p className="error-message">{errorMessage}</p>
         </div>
       }
       {isAuthenticated &&
-        <div>
+        <div className="pull-request-container">
+          <h2>Create Pull Requests</h2>
           <input type="text" placeholder="Repository name" value={repository} onChange={(e) => setRepository(e.target.value)} />
           <input type="text" placeholder="Source branch" value={sourceBranch} onChange={(e) => setSourceBranch(e.target.value)} />
           <input type="text" placeholder="Comma-separated target branches" value={targetBranches} onChange={(e) => setTargetBranches(e.target.value)} />
           <button onClick={createPullRequests}>Create Pull Requests</button>
-          <p>{errorMessage}</p>
+          <p className="error-message">{errorMessage}</p>
         </div>
       }
     </div>
